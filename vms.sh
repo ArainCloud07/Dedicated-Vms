@@ -11,7 +11,7 @@ pause() {
 header() {
     clear
     echo "====================================="
-    echo "        DOCKER VPS MANAGER"
+    echo "     DEDICATED IPv4 VPS MANAGER"
     echo "====================================="
 }
 
