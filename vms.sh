@@ -15,6 +15,28 @@ header() {
     echo "====================================="
 }
 
+detect_network() {
+    if ! docker network inspect $NETWORK >/dev/null 2>&1; then
+        echo "macvlan network not found. Creating..."
+
+        PARENT=$(ip route | grep default | awk '{print $5}')
+        GATEWAY=$(ip route | grep default | awk '{print $3}')
+        SUBNET=$(ip -o -f inet addr show $PARENT | awk '{print $4}')
+
+        echo "Interface: $PARENT"
+        echo "Gateway: $GATEWAY"
+        echo "Subnet: $SUBNET"
+
+        docker network create -d macvlan \
+          --subnet=$SUBNET \
+          --gateway=$GATEWAY \
+          -o parent=$PARENT $NETWORK
+
+        echo "macvlan_pub created."
+        sleep 2
+    fi
+}
+
 show_vps() {
     docker ps -a --filter "ancestor=$IMAGE" \
     --format " - {{.Names}} ({{.Status}})"
@@ -181,4 +203,5 @@ menu() {
     done
 }
 
+detect_network
 menu
