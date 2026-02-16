@@ -15,18 +15,19 @@ header() {
     echo "====================================="
 }
 
+show_vps() {
+    docker ps -a --filter "ancestor=$IMAGE" \
+    --format " - {{.Names}} ({{.Status}})"
+}
+
 list_vps() {
     header
-    echo "Running VPS Containers:"
+    echo "VPS LIST"
     echo ""
-
-    docker ps --filter "ancestor=$IMAGE" \
-    --format "table {{.Names}}\t{{.Status}}"
-
+    show_vps
+    echo ""
     COUNT=$(docker ps --filter "ancestor=$IMAGE" -q | wc -l)
-    echo ""
     echo "Total VPS Running: $COUNT"
-
     pause
 }
 
@@ -63,33 +64,53 @@ create_vps() {
 
 delete_vps() {
     header
-    read -p "VPS name: " NAME
+    echo "DELETE VPS"
+    echo ""
+    show_vps
+    echo ""
+    read -p "Enter VPS name to delete: " NAME
     docker rm -f $NAME
+    echo "Deleted."
     pause
 }
 
 start_vps() {
     header
-    read -p "VPS name: " NAME
+    echo "START VPS"
+    echo ""
+    show_vps
+    echo ""
+    read -p "Enter VPS name to start: " NAME
     docker start $NAME
+    echo "Started."
     pause
 }
 
 stop_vps() {
     header
-    read -p "VPS name: " NAME
+    echo "STOP VPS"
+    echo ""
+    show_vps
+    echo ""
+    read -p "Enter VPS name to stop: " NAME
     docker stop $NAME
+    echo "Stopped."
     pause
 }
 
 change_ip() {
     header
-    read -p "VPS name: " NAME
+    echo "CHANGE VPS IP"
+    echo ""
+    show_vps
+    echo ""
+    read -p "Enter VPS name: " NAME
     read -p "New IP: " NEWIP
 
     docker network disconnect $NETWORK $NAME
     docker network connect --ip $NEWIP $NETWORK $NAME
 
+    echo "IP updated."
     pause
 }
 
