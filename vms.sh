@@ -36,7 +36,6 @@ find_free_ips() {
     for ((i=$START;i<=$END;i++)); do
         IP="$SUBNET.$i"
         timeout 1 bash -c "</dev/tcp/$IP/22" &>/dev/null
-
         if [ $? -ne 0 ]; then
             echo "FREE: $IP"
         fi
@@ -72,6 +71,23 @@ create_vps() {
     echo "Username: root"
     echo "Password: $PASS"
     echo "ssh root@$IP"
+
+    sleep 3
+}
+
+change_password() {
+    header
+    echo "CHANGE ROOT PASSWORD"
+    echo ""
+    show_vps
+    echo ""
+
+    read -p "Enter VPS name: " NAME
+    read -s -p "New password: " PASS
+    echo ""
+
+    docker exec $NAME bash -c "echo root:$PASS | chpasswd"
+    echo "Password updated."
 
     pause
 }
@@ -145,7 +161,8 @@ menu() {
         echo "5. Change IP"
         echo "6. List VPS"
         echo "7. Find Free IPs"
-        echo "8. Exit"
+        echo "8. Change Password"
+        echo "9. Exit"
         echo ""
 
         read -p "Select: " CHOICE
@@ -158,7 +175,8 @@ menu() {
             5) change_ip ;;
             6) list_vps ;;
             7) find_free_ips ;;
-            8) clear; exit ;;
+            8) change_password ;;
+            9) clear; exit ;;
         esac
     done
 }
