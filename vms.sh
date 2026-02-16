@@ -20,14 +20,28 @@ show_vps() {
     --format " - {{.Names}} ({{.Status}})"
 }
 
-list_vps() {
+find_free_ips() {
     header
-    echo "VPS LIST"
+    echo "FIND FREE IPs (SSH port closed)"
     echo ""
-    show_vps
+
+    read -p "Subnet (example 138.252.100): " SUBNET
+    read -p "Start range: " START
+    read -p "End range: " END
+
     echo ""
-    COUNT=$(docker ps --filter "ancestor=$IMAGE" -q | wc -l)
-    echo "Total VPS Running: $COUNT"
+    echo "Scanning..."
+    echo ""
+
+    for ((i=$START;i<=$END;i++)); do
+        IP="$SUBNET.$i"
+        timeout 1 bash -c "</dev/tcp/$IP/22" &>/dev/null
+
+        if [ $? -ne 0 ]; then
+            echo "FREE: $IP"
+        fi
+    done
+
     pause
 }
 
@@ -68,9 +82,8 @@ delete_vps() {
     echo ""
     show_vps
     echo ""
-    read -p "Enter VPS name to delete: " NAME
+    read -p "Enter VPS name: " NAME
     docker rm -f $NAME
-    echo "Deleted."
     pause
 }
 
@@ -80,9 +93,8 @@ start_vps() {
     echo ""
     show_vps
     echo ""
-    read -p "Enter VPS name to start: " NAME
+    read -p "Enter VPS name: " NAME
     docker start $NAME
-    echo "Started."
     pause
 }
 
@@ -92,9 +104,8 @@ stop_vps() {
     echo ""
     show_vps
     echo ""
-    read -p "Enter VPS name to stop: " NAME
+    read -p "Enter VPS name: " NAME
     docker stop $NAME
-    echo "Stopped."
     pause
 }
 
@@ -110,7 +121,17 @@ change_ip() {
     docker network disconnect $NETWORK $NAME
     docker network connect --ip $NEWIP $NETWORK $NAME
 
-    echo "IP updated."
+    pause
+}
+
+list_vps() {
+    header
+    echo "VPS LIST"
+    echo ""
+    show_vps
+    echo ""
+    COUNT=$(docker ps --filter "ancestor=$IMAGE" -q | wc -l)
+    echo "Total VPS Running: $COUNT"
     pause
 }
 
@@ -123,7 +144,8 @@ menu() {
         echo "4. Stop VPS"
         echo "5. Change IP"
         echo "6. List VPS"
-        echo "7. Exit"
+        echo "7. Find Free IPs"
+        echo "8. Exit"
         echo ""
 
         read -p "Select: " CHOICE
@@ -135,7 +157,8 @@ menu() {
             4) stop_vps ;;
             5) change_ip ;;
             6) list_vps ;;
-            7) clear; exit ;;
+            7) find_free_ips ;;
+            8) clear; exit ;;
         esac
     done
 }
